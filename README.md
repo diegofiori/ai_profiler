@@ -55,4 +55,57 @@ shutil.move(profile, str(save_path / "profile_tf_onnx.json"))
 The profile will be saved in the `save_path` directory. You can visualize it using your favorite browser by opening the `profile_tf_onnx.json` file. Go to `chrome://tracing` and load the profile file.
 
 ## Profile PyTorch
+Similarly to Tensorflow, you can profile a PyTorch model by modifying the following example:
+```python
+import shutil
+from pathlib import Path
 
+from torchvision.models import resnet50
+import torch
+
+from profiler.torch_model import profile_torch_model
+
+save_path = Path('test')
+save_path.mkdir(exist_ok=True)
+model = resnet50()
+model.eval()
+x = torch.randn(1, 3, 224, 224)
+prof_file = profile_torch_model(
+    model, x
+)
+shutil.move(prof_file, save_path / "profile.json")
+```
+The produced profile file saved in the `save_path` directory can be visualized using your favorite browser by opening the `profile.json` file. Go to `chrome://tracing` and load the profile file.
+
+Alternatively, you can convert the model to onnx and then trace the model execution by running:
+```python
+import shutil
+from pathlib import Path
+
+from torchvision.models import resnet50
+import torch
+import numpy as np
+
+from profiler.convert import convert_torch_to_onnx
+from profiler.onnx_model import profile_onnx_model
+
+save_path = Path('test')
+save_path.mkdir(exist_ok=True)
+model = resnet50()
+model.eval()
+x = torch.randn(1, 3, 224, 224)
+dynamic_axes = {
+    'input': [0],
+}
+onnx_model_str = convert_torch_to_onnx(
+    model, x, str(save_path / "test.onnx"),
+    input_names=["input"],
+    dynamic_axes=dynamic_axes,
+    output_names=["output"]
+)
+profile = profile_onnx_model(
+    onnx_model_str, np.random.randn(1, 3, 224, 224).astype(np.float32)
+)
+shutil.move(profile, str(save_path / "profile.json"))
+```
+Again, the profile will be saved in the `save_path` directory. You can visualize it using your favorite browser by opening the `profile.json` file. Go to `chrome://tracing` and load the profile file.
