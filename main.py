@@ -3,6 +3,7 @@ import shutil
 from profiler.convert import convert_torch_to_onnx, convert_tensorflow_to_onnx
 from profiler.onnx_model import profile_onnx_model
 from profiler.tf_model import profile_tf_model
+from profiler.torch_model import profile_torch_model
 
 
 def torch2onnx_main():
@@ -63,5 +64,22 @@ def tensorflow_main():
     )
 
 
+def torch_main():
+    from pathlib import Path
+
+    from torchvision.models import resnet50
+    import torch
+
+    save_path = Path('test')
+    save_path.mkdir(exist_ok=True)
+    model = resnet50()
+    model.eval()
+    x = torch.randn(1, 3, 224, 224)
+    prof_file = profile_torch_model(
+        model, x
+    )
+    shutil.move(prof_file, save_path / "profile.json")
+
+
 if __name__ == '__main__':
-    tensorflow_main()
+    torch_main()
